@@ -418,9 +418,10 @@ function renderCurrentSlots() {
 }
 
 function renderScores() {
-    $('totalScore').textContent = totalScore;
-    $('bestScore').textContent  = bestGame;
-    $('streak').textContent     = streak + (streak >= 3 ? '🔥' : '');
+    $('totalScore').textContent  = totalScore;
+    $('bestScore').textContent   = bestGame;
+    $('streak').textContent      = streak + (streak >= 3 ? '🔥' : '');
+    $('guessesLeft').textContent = MAX_GUESSES - guesses.length;
 }
 
 function buildPalette() {
