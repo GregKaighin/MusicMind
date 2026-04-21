@@ -15,70 +15,113 @@ const MAX_GUESSES = 10;
 
 /* ===== AUDIO ===== */
 let audioCtx = null;
+let compressor = null;
 
 function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -18;
+        compressor.knee.value      = 20;
+        compressor.ratio.value     = 8;
+        compressor.attack.value    = 0.003;
+        compressor.release.value   = 0.2;
+        compressor.connect(audioCtx.destination);
+    }
     return audioCtx;
 }
 
-function tone(freq, startTime, duration, type = 'triangle', volume = 0.45) {
+function getOut() { getAudioCtx(); return compressor; }
+
+// Simple tone for UI feedback sounds (not piano)
+function tone(freq, startTime, duration, type = 'sine', volume = 0.35) {
     const ctx  = getAudioCtx();
     const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(getOut());
     osc.type = type;
     osc.frequency.setValueAtTime(freq, startTime);
     gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.start(startTime);
     osc.stop(startTime + duration);
-    return osc;
 }
 
-function playNote(freq, startTime, duration = 0.6) {
+// Piano synthesis: additive harmonics + hammer transient + two-stage decay
+function playNote(freq, startTime, duration = 1.4) {
     const ctx = getAudioCtx();
-    // Main triangle wave + quiet octave-up sine for richness
-    tone(freq,     startTime, duration, 'triangle', 0.42);
-    tone(freq * 2, startTime, duration, 'sine',     0.08);
+    const out = getOut();
+
+    // Master envelope — fast attack, quick initial decay, long singing tail
+    const master = ctx.createGain();
+    master.connect(out);
+    master.gain.setValueAtTime(0, startTime);
+    master.gain.linearRampToValueAtTime(0.9,  startTime + 0.007);
+    master.gain.exponentialRampToValueAtTime(0.45, startTime + 0.07);
+    master.gain.exponentialRampToValueAtTime(0.18, startTime + 0.5);
+    master.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    // Harmonic series — each partial at a sine wave
+    // Slight inharmonicity stretching mimics piano string stiffness
+    const partials = [
+        { n: 1, v: 0.50 },
+        { n: 2, v: 0.24 },
+        { n: 3, v: 0.15 },
+        { n: 4, v: 0.09 },
+        { n: 5, v: 0.05 },
+        { n: 6, v: 0.025 },
+        { n: 7, v: 0.012 },
+    ];
+
+    partials.forEach(({ n, v }) => {
+        const inharmonicity = 1 + (n * n - 1) * 0.00018;
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(master);
+        osc.type = 'sine';
+        osc.frequency.value = freq * n * inharmonicity;
+        // Higher harmonics decay faster (string characteristic)
+        gain.gain.setValueAtTime(v, startTime);
+        gain.gain.exponentialRampToValueAtTime(v * 0.3, startTime + 0.3 / n);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration * (1 / Math.sqrt(n)));
+        osc.start(startTime);
+        osc.stop(startTime + duration + 0.05);
+    });
+
+    // Hammer transient — short filtered noise burst
+    const bufLen  = Math.floor(ctx.sampleRate * 0.025);
+    const buf     = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data    = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufLen);
+    const noise     = ctx.createBufferSource();
+    const noiseGain = ctx.createGain();
+    const filter    = ctx.createBiquadFilter();
+    noise.buffer    = buf;
+    filter.type     = 'bandpass';
+    filter.frequency.value = freq * 3;
+    filter.Q.value  = 0.8;
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(out);
+    noiseGain.gain.setValueAtTime(0.12, startTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.025);
+    noise.start(startTime);
+    noise.stop(startTime + 0.03);
 }
 
-function playMelody(indices, noteDuration = 0.6, gap = 0.5) {
+function playMelody(indices, noteDuration = 1.4, gap = 0.55) {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.05;
     indices.forEach((idx, i) => playNote(NOTES[idx].freq, now + i * gap, noteDuration));
 }
 
-// Satisfying peg-place sound: punchy note with pitch-drop and percussive click
+// Peg placement — short piano note
 function playPegPlace(noteIdx) {
     const ctx = getAudioCtx();
-    const now = ctx.currentTime + 0.01;
-    const freq = NOTES[noteIdx].freq;
-
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq * 1.1, now);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.85, now + 0.18);
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-    osc.start(now);
-    osc.stop(now + 0.22);
-
-    // Percussive click layer
-    const click = ctx.createOscillator();
-    const cGain = ctx.createGain();
-    click.connect(cGain);
-    cGain.connect(ctx.destination);
-    click.type = 'square';
-    click.frequency.value = 900;
-    cGain.gain.setValueAtTime(0.07, now);
-    cGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-    click.start(now);
-    click.stop(now + 0.03);
+    playNote(NOTES[noteIdx].freq, ctx.currentTime + 0.01, 0.55);
 }
 
 // Complete miss — deep hollow thud
@@ -120,13 +163,13 @@ function playWrongPositions(whites) {
     }
 }
 
-// Correct positions — ascending bell chimes, one per black peg
+// Correct positions — ascending piano chimes, one per black peg
 function playCorrectPositions(blacks) {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.05;
     const steps = [1, 5/4, 3/2, 2];
     for (let i = 0; i < blacks; i++) {
-        tone(440 * steps[i], now + i * 0.15, 0.55, 'sine', 0.35);
+        playNote(440 * steps[i], now + i * 0.18, 0.8);
     }
 }
 
@@ -199,24 +242,25 @@ function playGuessFeedback(blacks, whites) {
 function playWin() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.05;
-    // Ascending arpeggio then full chord
+    // Ascending piano arpeggio
     [0, 2, 4, 6].forEach((n, i) => {
-        tone(NOTES[n].freq * 2, now + i * 0.14, 0.6, 'triangle', 0.38);
+        playNote(NOTES[n].freq * 2, now + i * 0.16, 1.2);
     });
-    // Final chord burst
+    // Final chord — root, third, fifth together
     [0, 2, 4].forEach(n => {
-        tone(NOTES[n].freq * 2, now + 0.7, 0.9, 'sine', 0.2);
+        playNote(NOTES[n].freq * 2, now + 0.78, 1.8);
     });
 }
 
 function playLose() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.05;
+    // Descending piano notes
     [6, 4, 2, 0].forEach((n, i) => {
-        tone(NOTES[n].freq * 0.5, now + i * 0.25, 0.6, 'triangle', 0.38);
+        playNote(NOTES[n].freq * 0.5, now + i * 0.28, 1.0);
     });
     // Final low thud
-    tone(60, now + 1.1, 0.7, 'sine', 0.4);
+    tone(55, now + 1.2, 0.9, 'sine', 0.45);
 }
 
 /* ===== GAME STATE ===== */
