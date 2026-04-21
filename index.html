@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MusicMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-brand">
+                <h1 class="title">Music<span class="title-accent">Mind</span></h1>
+                <p class="subtitle">The Musical Mastermind</p>
+            </div>
+            <div class="score-panel">
+                <div class="score-item">
+                    <span class="score-label">Score</span>
+                    <span class="score-value" id="totalScore">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Best</span>
+                    <span class="score-value" id="bestScore">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Streak</span>
+                    <span class="score-value" id="streak">0&#x1F525;</span>
+                </div>
+            </div>
+            <button class="btn-icon" id="helpBtn" aria-label="How to play">?</button>
+        </header>
+
+        <main class="game">
+            <div class="board-wrap">
+                <div class="board" id="board"></div>
+            </div>
+
+            <div class="action-area">
+                <div class="current-row">
+                    <div class="current-slots" id="currentSlots"></div>
+                    <div class="action-btns">
+                        <button class="btn btn-ghost" id="clearBtn" title="Clear guess">&#x232B;</button>
+                        <button class="btn btn-ghost" id="playBtn" title="Play melody">&#9834;</button>
+                        <button class="btn btn-submit" id="submitBtn" disabled>Check</button>
+                    </div>
+                </div>
+                <div class="palette" id="palette"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div class="overlay" id="overlay" hidden>
+        <div class="overlay-card">
+            <div class="overlay-emoji" id="overlayEmoji"></div>
+            <h2 class="overlay-title" id="overlayTitle"></h2>
+            <p class="overlay-msg" id="overlayMsg"></p>
+            <div class="secret-display" id="secretDisplay"></div>
+            <div class="overlay-score" id="overlayScore"></div>
+            <button class="btn btn-primary btn-lg" id="newGameBtn">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Help Overlay -->
+    <div class="overlay" id="helpOverlay" hidden>
+        <div class="overlay-card">
+            <h2 class="overlay-title">How to Play</h2>
+            <div class="help-content">
+                <p>Guess the secret 4-note melody in 10 attempts.</p>
+                <div class="help-row">
+                    <div class="help-peg peg-black"></div>
+                    <span>Right note, right position</span>
+                </div>
+                <div class="help-row">
+                    <div class="help-peg peg-white"></div>
+                    <span>Right note, wrong position</span>
+                </div>
+                <div class="help-row">
+                    <div class="help-peg peg-empty"></div>
+                    <span>Note not in the melody</span>
+                </div>
+                <p class="help-note">Notes can repeat. Tap &#9834; to hear your guess.</p>
+                <div class="note-legend" id="noteLegend"></div>
+            </div>
+            <button class="btn btn-primary" id="closeHelpBtn">Got it</button>
+        </div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
