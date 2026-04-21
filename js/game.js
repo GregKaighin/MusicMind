@@ -141,44 +141,69 @@ function playMiss() {
     osc.stop(now + 0.6);
 }
 
-// Correct notes, wrong positions — swirling "almost!" bouncing tones
-function playWrongPositions(whites) {
+// Bell synthesis — inharmonic partials with fast attack and long ring
+function playBell(freq, startTime, volume = 0.38, ringDuration = 1.8) {
     const ctx = getAudioCtx();
-    const now = ctx.currentTime + 0.05;
-    for (let i = 0; i < whites; i++) {
-        const freq = 380 + i * 90;
-        const t = now + i * 0.13;
+    const out = getOut();
+
+    // Classic bell partial ratios (inharmonic, as in real bells)
+    const partials = [
+        { ratio: 1.000, v: 1.00 },
+        { ratio: 1.470, v: 0.55 },
+        { ratio: 1.780, v: 0.35 },
+        { ratio: 2.000, v: 0.25 },
+        { ratio: 2.756, v: 0.18 },
+        { ratio: 3.000, v: 0.10 },
+        { ratio: 4.070, v: 0.06 },
+    ];
+
+    const master = ctx.createGain();
+    master.connect(out);
+    master.gain.setValueAtTime(0, startTime);
+    master.gain.linearRampToValueAtTime(volume, startTime + 0.004);
+    master.gain.exponentialRampToValueAtTime(0.001, startTime + ringDuration);
+
+    partials.forEach(({ ratio, v }) => {
         const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(master);
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq,        t);
-        osc.frequency.linearRampToValueAtTime(freq * 1.25, t + 0.1);
-        osc.frequency.linearRampToValueAtTime(freq,        t + 0.2);
-        gain.gain.setValueAtTime(0.28, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-        osc.start(t);
-        osc.stop(t + 0.3);
+        osc.frequency.value = freq * ratio;
+        // Higher partials decay faster — gives the bright attack then warm tail
+        gain.gain.setValueAtTime(v, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + ringDuration / Math.pow(ratio, 0.7));
+        osc.start(startTime);
+        osc.stop(startTime + ringDuration + 0.05);
+    });
+}
+
+// White pegs — softer, muted bell tones (right note, wrong place)
+function playWrongPositions(whites) {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime + 0.05;
+    const freqs = [523.25, 587.33, 659.25, 698.46]; // C5 D5 E5 F5
+    for (let i = 0; i < whites; i++) {
+        playBell(freqs[i], now + i * 0.22, 0.24, 1.2);
     }
 }
 
-// Correct positions — ascending piano chimes, one per black peg
+// Black pegs — bright ascending bell chimes (right note, right place)
 function playCorrectPositions(blacks) {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.05;
-    const steps = [1, 5/4, 3/2, 2];
+    const freqs = [880, 1046.5, 1174.66, 1318.51]; // A5 C6 D6 E6
     for (let i = 0; i < blacks; i++) {
-        playNote(440 * steps[i], now + i * 0.18, 0.8);
+        playBell(freqs[i], now + i * 0.2, 0.42, 2.2);
     }
 }
 
-// Mixed result — warm major chord stab
+// Mixed result — soft bell chord (some right, some wrong position)
 function playMixed() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.05;
-    [330, 330 * 5/4, 330 * 3/2].forEach((f, i) => {
-        tone(f, now + i * 0.04, 0.5, 'sine', 0.22);
+    [523.25, 659.25, 783.99].forEach((f, i) => {
+        playBell(f, now + i * 0.06, 0.22, 1.4);
     });
 }
 
