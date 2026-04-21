@@ -330,7 +330,7 @@ function evaluate(guess, secret) {
 }
 
 function roundScore(guessNumber) {
-    return (MAX_GUESSES - guessNumber + 1) * 100;
+    return MAX_GUESSES - guessNumber + 1;
 }
 
 /* ===== DOM HELPERS ===== */
