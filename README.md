@@ -55,15 +55,15 @@ Notes can repeat in the secret melody.
 
 The game gives rich audio feedback on every action:
 
-- **Placing a note** — a punchy pitched click
+- **Placing a note** — a punchy pitched click with percussive attack
 - **♪ Play** — hear your guess as a melody
-- **Complete miss** — deep hollow thud
-- **Right notes, wrong positions** — swirling bouncing tones
-- **Right positions** — ascending bell chimes (one per correct position)
-- **Mixed result** — warm chord stab
-- **Getting warmer** (more correct positions than last guess) — rising sweep
-- **Getting colder** (fewer correct positions) — falling sweep
-- **Win** — triumphant arpeggio and chord
+- **Complete miss** — deep hollow thud that drops in pitch
+- **Right notes, wrong positions** — swirling bouncing tones, one per correct note
+- **Right positions** — ascending bell chimes, one per correct position
+- **Mixed result** — warm major chord stab
+- **Getting warmer** (more correct positions than last guess) — rising sweep before the result
+- **Getting colder** (fewer correct positions) — falling sweep before the result
+- **Win** — triumphant ascending arpeggio followed by a full chord
 - **Lose** — descending arpeggio and low thud, followed by the secret melody
 
 ---
@@ -92,7 +92,7 @@ Scores are saved locally in your browser.
 - Vanilla JavaScript
 - Web Audio API
 
-No frameworks, no dependencies.
+No frameworks, no dependencies. Fully responsive — works on mobile and touchscreen devices.
 
 ---
 
