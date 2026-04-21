@@ -171,9 +171,10 @@ html, body {
 }
 
 .row-number {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    width: 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold);
+    width: 22px;
     text-align: center;
     flex-shrink: 0;
 }
