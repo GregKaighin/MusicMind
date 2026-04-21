@@ -72,10 +72,10 @@ The game gives rich audio feedback on every action:
 
 | Guess number | Points awarded |
 |---|---|
-| 1st guess | 1000 |
-| 2nd guess | 900 |
+| 1st guess | 9 |
+| 2nd guess | 8 |
 | … | … |
-| 10th guess | 100 |
+| 10th guess | 1 |
 
 - **Score** — cumulative points across all games
 - **Best** — highest single-game score
