@@ -509,6 +509,7 @@ function onSubmit() {
 
     renderBoard();
     renderCurrentSlots();
+    renderScores();
 
     if (blacks === CODE_LEN) {
         onWin();
