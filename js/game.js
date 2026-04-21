@@ -302,6 +302,8 @@ function loadStorage() {
     totalScore = parseInt(localStorage.getItem('mm_score') || '0', 10);
     streak     = parseInt(localStorage.getItem('mm_streak') || '0', 10);
     bestGame   = parseInt(localStorage.getItem('mm_best') || '0', 10);
+    // Reset if stored values look like old 100x scoring
+    if (totalScore > 9999 || bestGame > 9) { totalScore = 0; bestGame = 0; streak = 0; saveStorage(); }
 }
 
 function saveStorage() {
@@ -330,7 +332,7 @@ function evaluate(guess, secret) {
 }
 
 function roundScore(guessNumber) {
-    return MAX_GUESSES - guessNumber + 1;
+    return 1;
 }
 
 /* ===== DOM HELPERS ===== */
