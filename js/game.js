@@ -555,7 +555,11 @@ function showOverlay(won, points) {
 
     const display = $('secretDisplay');
     display.innerHTML = '';
-    secret.forEach(n => display.appendChild(makePeg(n)));
+    secret.forEach(n => {
+        const peg = makePeg(n);
+        peg.textContent = NOTES[n].name;
+        display.appendChild(peg);
+    });
 
     $('overlayScore').textContent = won ? `+${points} points` : '';
 

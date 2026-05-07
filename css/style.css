@@ -507,6 +507,16 @@ html, body {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+}
+
+.secret-display .peg {
+    flex: none;
+    /* fill available card width: viewport minus overlay padding (2rem), card padding (3rem), and 3 gaps (1.5rem) */
+    width: min(80px, calc((100vw - 6.5rem) / 4));
+    height: min(80px, calc((100vw - 6.5rem) / 4));
+    font-size: min(1.1rem, calc((100vw - 6.5rem) / 16));
 }
 
 .overlay-score {
